@@ -5,26 +5,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm install       # Install dependencies
-npm run dev       # Start dev server (http://localhost:5173)
-npm run build     # Production build
-npm run lint      # Run ESLint
-npm run preview   # Preview production build
+npm install      # install dependencies
+npm run dev      # start dev server at http://localhost:5173
+npm run build    # production build
+npm run preview  # preview production build
+npm run lint     # run ESLint
 ```
+
+There is no test suite in this project.
 
 ## Architecture
 
-This is a single-component React app (Vite + React 19). All application logic lives in `src/App.jsx` — there are no sub-components, routing, or external state management.
+This is a single-page React app (Vite + React 19), decomposed into the following components:
 
-**State in `App.jsx`:**
-- `transactions` — array of `{ id, description, amount, type, category, date }`. `amount` is stored as a string; the `reduce` calls use `+` so they concatenate instead of summing (known bug — fix by parsing with `Number()` or `parseFloat()`).
-- `filterType` / `filterCategory` — drive client-side filtering of the transaction list.
-- Form fields (`description`, `amount`, `type`, `category`) are controlled inputs reset on submit.
+- `src/App.jsx` — root component; holds the `transactions` array in state and passes data/callbacks down to children.
+- `src/Summary.jsx` — displays total income, expenses, and balance; receives `transactions` as a prop and computes totals internally.
+- `src/TransactionForm.jsx` — form for adding a new transaction; owns its own form field state and calls `onAdd(transaction)` on submit.
+- `src/TransactionList.jsx` — displays the filtered transaction table; receives `transactions` as a prop and owns filter state (`filterType`, `filterCategory`).
+- `src/App.css` — all styles, scoped by class names (`.summary`, `.add-transaction`, `.transactions`, `.filters`, `.delete-btn`, etc.).
+- `src/main.jsx` — entry point, mounts `<App />` into `#root`.
 
-**Derived values** (computed inline on each render, not stored in state):
-- `totalIncome`, `totalExpenses`, `balance` — reduced from the `transactions` array.
-- `filteredTransactions` — filtered view used by the table.
+The `categories` array is duplicated in `TransactionForm.jsx` and `TransactionList.jsx` — not yet extracted to a shared location.
 
-**Categories** are a hardcoded array: `["food", "housing", "utilities", "transport", "entertainment", "salary", "other"]`.
+### Known intentional issues (part of the course curriculum)
 
-There is no persistence — all data resets on page refresh. Seed transactions have hardcoded `date` strings (`"2025-01-*"`); new transactions use `new Date().toISOString().split('T')[0]`.
+- **Seeded data:** Transaction #4 ("Freelance Work") is typed `"expense"` but categorized as `"salary"` — intentional inconsistency.
+- **UI:** No delete functionality wired up (`.delete-btn` CSS exists but no button is rendered).
